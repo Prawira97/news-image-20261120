@@ -29,6 +29,7 @@ OUT = Path(os.environ.get("MAKEFUN_OUTPUT_DIR", "/output"))
 
 EXPECTED_WIDTH = 1024
 EXPECTED_HEIGHT = 1024
+MAX_BYTES = 1_048_576  # contest cap: entry.png must fit in 1 MiB
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 
 
@@ -38,12 +39,14 @@ def fail(message):
 
 
 def validate_png(path):
-    """Check the written file is a real, complete 1024x1024 PNG."""
+    """Check the written file is a real, complete 1024x1024 PNG within 1 MiB."""
     if not path.is_file():
         fail(f"output missing: {path}")
     data = path.read_bytes()
     if not data:
         fail(f"output is empty: {path}")
+    if len(data) > MAX_BYTES:
+        fail(f"output is {len(data)} bytes, over the 1 MiB cap: {path}")
     if data[:8] != PNG_SIGNATURE:
         fail(f"output is not a PNG file: {path}")
     if len(data) < 33 or data[12:16] != b"IHDR":
